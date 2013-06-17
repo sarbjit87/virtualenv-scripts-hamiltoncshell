@@ -1,0 +1,90 @@
+# Wrapper Script in Hamilton CShell for virtualenv
+# Virtualenv in windows works with command prompt only
+# This wrapper script will make it work with Hamliton Cshell
+# Usage :
+# <script> <mode> <path-to-env>
+# where mode could be activate/deactivate
+# 
+# Version : 1.0
+
+proc getAbsPath(envpath)
+  set cwd1 = `pwd`
+	set test1 = `dirname $envpath`
+	if ($test1 == ".") then
+		set rpath = "$cwd1/$envpath"
+	else
+		set rpath = $envpath
+	end
+	return $rpath
+end
+
+proc ActivateEnv(envpath)
+	setenv VIRTUAL_ENV $envpath
+	if (! $?OLD_VIRTUAL_PROMPT) then
+		setenv OLD_VIRTUAL_PROMPT $prompt1
+		setenv prompt1 "($VENV)% "
+	end
+	if (! $?OLD_VIRTUAL_PYTHONHOME) then
+		if ($?PYTHONHOME) then
+			setenv OLD_VIRTUAL_PYTHONHOME $PYTHONHOME
+		end
+		setenv PYTHONHOME ""
+	end
+	if (! $?OLD_VIRTUAL_PATH) then
+		setenv OLD_VIRTUAL_PATH $path
+		set path = ($VIRTUAL_ENV/Scripts $path)
+	end
+end
+
+proc DeactivateEnv()
+	if ($?OLD_VIRTUAL_PROMPT) then
+		setenv prompt1 $OLD_VIRTUAL_PROMPT
+		unsetenv OLD_VIRTUAL_PROMPT
+	end
+	if ($?OLD_VIRTUAL_PYTHONHOME) then
+		setenv PYTHONHOME $OLD_VIRTUAL_PYTHONHOME
+		unsetenv OLD_VIRTUAL_PYTHONHOME
+	end
+	if ($?OLD_VIRTUAL_PATH) then
+		set path = $OLD_VIRTUAL_PATH
+		unsetenv OLD_VIRTUAL_PATH
+	end
+end
+
+proc Usage()
+	echo "Usage:"
+	echo "$scriptname <MODE> <Path-to-env>"
+	echo "where MODE could be activate/deactivate"
+	unproc Usage
+end
+ 
+if ($#argv != 2) then
+	echo "Invalid Arguments passed ..."
+	Usage
+	exit 2
+end
+
+set MODE = $argv[0]
+set VENV1 = $argv[1]
+set VENV = `getAbsPath $VENV1`
+
+if (($MODE != "activate") && ($MODE != "deactivate")) then
+	echo "ERROR : $scriptname should be called with either activate or deactivate mode"
+	exit 2
+end
+
+if (! -e $VENV/Scripts/activate)  then
+	echo "$VENV is not a valid virtual environment ..."
+	exit 2
+end
+
+echo $MODE
+
+if ($MODE == "activate") then
+	ActivateEnv $VENV
+	unproc ActivateEnv
+else
+	DeactivateEnv
+	unproc DeactivateEnv
+end
+
